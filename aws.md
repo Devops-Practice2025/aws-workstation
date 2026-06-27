@@ -216,7 +216,6 @@ export INSTANCE_A=$(aws ec2 run-instances \
     --subnet-id $PRIV_SUBNET_A \
     --security-group-ids $SG_APP \
     --user-data file://user-data.sh \
-    --associate-public-ip-address false \
     --query 'Instances[0].InstanceId' --output text)
 
 export INSTANCE_B=$(aws ec2 run-instances \
@@ -225,7 +224,6 @@ export INSTANCE_B=$(aws ec2 run-instances \
     --subnet-id $PRIV_SUBNET_B \
     --security-group-ids $SG_APP \
     --user-data file://user-data.sh \
-    --associate-public-ip-address false \
     --query 'Instances[0].InstanceId' --output text)
 
 # 5.4 Register instances to the Target Group
@@ -242,20 +240,19 @@ aws elbv2 register-targets --target-group-arn $TG_APP --targets Id=$INSTANCE_A I
 aws rds create-db-subnet-group --db-subnet-group-name secure-db-subnet-group --db-subnet-group-description "Subnets for RDS" --subnet-ids $DB_SUBNET_A $DB_SUBNET_B
 
 # 6.2 Create RDS (MySQL, Multi-AZ)
-export RDS_PASSWORD="YourSecurePassword123!" # CHANGE THIS!
+export RDS_PASSWORD="SecurePassword123!"
 
 aws rds create-db-instance \
-    --db-instance-identifier secure-app-db \
-    --db-instance-class db.t3.micro \
-    --engine mysql \
-    --master-username admin_user \
-    --master-user-password $RDS_PASSWORD \
-    --allocated-storage 20 \
-    --vpc-security-group-ids $SG_DB \
-    --db-subnet-group-name secure-db-subnet-group \
-    --multi-az true \
-    --backup-retention-period 7 \
-    --publicly-accessible false
+  --db-instance-identifier secure-app-db \
+  --db-instance-class db.t3.micro \
+  --engine mysql \
+  --master-username admin_user \
+  --master-user-password $RDS_PASSWORD \
+  --allocated-storage 20 \
+  --vpc-security-group-ids $SG_DB \
+  --db-subnet-group-name secure-db-subnet-group \
+  --multi-az \
+  --backup-retention-period 7
 
 # Wait for RDS to be available (takes ~5 mins)
 aws rds wait db-instance-available --db-instance-identifier secure-app-db
